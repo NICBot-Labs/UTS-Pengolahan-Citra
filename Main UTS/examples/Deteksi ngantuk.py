@@ -1,8 +1,8 @@
 import cv2
 
 # Load XML Haar Cascade
-face_detection = cv2.CascadeClassifier("models/haarcascade_frontalface_alt.xml")
-eye_detection = cv2.CascadeClassifier("models/haarcascade_eye_tree_eyeglasses.xml")
+face_detection = cv2.CascadeClassifier("../models/haarcascade_frontalface_alt.xml")
+eye_detection = cv2.CascadeClassifier("../models/haarcascade_eye_tree_eyeglasses.xml")
 
 # Cek model XML
 if face_detection.empty():
@@ -24,7 +24,6 @@ BATAS_MENGANTUK = 20
 
 while True:
     ret, frame = cap.read()
-
     if not ret:
         print("Kamera tidak terbaca")
         break

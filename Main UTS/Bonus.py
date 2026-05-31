@@ -3,10 +3,10 @@ from PIL import Image, ImageTk
 import cv2
 import pygame
 
+
 ########################################################################################################################
 # FUCTION
 ########################################################################################################################
-
 
 # VARIABEL global warna
 background_header = "#FCFCFC"
@@ -28,14 +28,28 @@ suara_var = None
 
 # variabel global alarm
 alarm_sedang_berjalan = False
-alarm_path = "alarm/ambulan.mp3"  # ganti sesuai lokasi file musik kamu
+
+alarm_path = "alarm/Asistan.mp3"  # ganti sesuai lokasi file musik kamu
+
+daftar_suara_alarm = {
+    "Asistan": "alarm/Asistan.mp3",
+    "Ambulan": "alarm/ambulan.mp3",
+    "Warning": "alarm/Warning.mp3",
+}
+
 pygame.mixer.init()
 
-# fungsi global effect hover
+# variabel code untuk warna menu aktif
+menu_buttons = []
+active_menu = None
+
 def hover_masuk(event):
-    event.widget.config(bg="#3048B7")
+    if event.widget != active_menu:
+        event.widget.config(bg="#3048B7")
+
 def hover_keluar(event):
-    event.widget.config(bg=background_sidebar)
+    if event.widget != active_menu:
+        event.widget.config(bg=background_sidebar)
 
 def alarm_nyala(time_waktu):
     global alarm_sedang_berjalan
@@ -56,6 +70,32 @@ def stop_alarm():
 
 face_detection = cv2.CascadeClassifier("models/haarcascade_frontalface_alt.xml")
 eye_detection = cv2.CascadeClassifier("models/haarcascade_eye_tree_eyeglasses.xml")
+
+def set_active_menu(button):
+    global active_menu
+    active_menu = button
+    for btn in menu_buttons:
+        if btn == active_menu:
+            btn.config(
+                bg="#3048B7",
+                fg="white",
+                activebackground="white",
+                activeforeground=background_sidebar
+            )
+        else:
+            btn.config(
+                bg=background_sidebar,
+                fg="white",
+                activebackground="#1E40D0",
+                activeforeground="white"
+            )
+
+def ganti_suara_alarm(pilihan):
+    global alarm_path
+    if pilihan in daftar_suara_alarm:
+        alarm_path = daftar_suara_alarm[pilihan]
+        print("Suara alarm dipilih:", pilihan)
+        print("Path alarm:", alarm_path)
 
 ########################################################################################################################
 # FUCTION CAMERA
@@ -127,7 +167,6 @@ def stop_camera():
                 label_camera.image = None
         except:
             pass
-
 
 ########################################################################################################################
 # FUCTION CAMERA dengan MODEL DETEKSI
@@ -216,7 +255,7 @@ def update_camera_deteksi():
                 if counter_mengantuk >= BATAS_MENGANTUK:
                     status = "MENGANTUK"
                     warna_status = (0, 0, 255)
-                    alarm_nyala(15000)
+                    alarm_nyala(5000)
                 else:
                     status = "MATA TERTUTUP SEMENTARA"
                     warna_status = (0, 255, 255)
@@ -413,17 +452,23 @@ def show_dashboard():
     ).pack(anchor="w", padx=15, pady=(10, 0))
 
     suara_var = StringVar()
-    suara_var.set("Istirahat Sebentar")
+    suara_var.set("Asistan")
 
+    # "Asistan": "alarm/Asistan.mp3",
+    # "Ambulan": "alarm/ambulan.mp3",
+    # "Warning": "alarm/Warning.mp3",
     pilihan_suara = [
-        "Istirahat Sebentar",
-        "Driver Mengantuk",
-        "Segera Menepi",
-        "Alarm Keras",
-        "Peringatan Ringan"
+        "Asistan",
+        "Ambulan",
+        "Warning"
     ]
 
-    menu_suara = OptionMenu(frame_suara, suara_var, *pilihan_suara)
+    menu_suara = OptionMenu(
+        frame_suara,
+        suara_var,
+        *pilihan_suara,
+        command=ganti_suara_alarm
+    )
     menu_suara.config(
         width=25,
         bg="#E7EDF0",
@@ -499,7 +544,6 @@ def show_tes_cam():
         width=18,
         command=stop_camera
     ).grid(row=0, column=1, padx=10)
-
 show_dashboard()
 
 ########################################################################################################################
@@ -552,19 +596,31 @@ def main_menu(teks, image_icon, command=None):
         bd=0,
         anchor="w",
         padx=10,
-        pady=16,
-        command = command
+        pady=16
     )
+
+    def klik_menu():
+        set_active_menu(tombol)
+        if command is not None:
+            command()
+
+    tombol.config(command=klik_menu)
+
     tombol.image = image_icon
     tombol.pack(fill="x")
     tombol.bind("<Enter>", hover_masuk)
     tombol.bind("<Leave>", hover_keluar)
+
+    menu_buttons.append(tombol)
+
     return tombol
 
-main_menu("Home", icon_home_tk, command=show_dashboard)
-main_menu("HD Image", icon_hd_tk, command=show_hd_image)
-main_menu("Image Convert", icon_conv_tk)
-main_menu("Tes Cam", icon_cam_tk, command=show_tes_cam)
+btn_home = main_menu("Home", icon_home_tk, command=show_dashboard)
+# btn_hd = main_menu("HD Image", icon_hd_tk, command=show_hd_image)
+# btn_convert = main_menu("Image Convert", icon_conv_tk)
+btn_tes_cam = main_menu("Tes Cam", icon_cam_tk, command=show_tes_cam)
+
+set_active_menu(btn_home)
 
 # Menjalankan GUI
 window.mainloop()
